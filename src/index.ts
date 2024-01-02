@@ -4,8 +4,9 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
-import { uploadFile } from './utils/upload'
 import { cors } from 'hono/cors'
+import { v4 as uuid } from 'uuid'
+import { uploadFile } from './utils/upload'
 import { ConvertData, convert } from './utils/convert'
 
 const execAsync = promisify(exec)
@@ -57,9 +58,7 @@ app.post('/', async (c) => {
     return c.json({ message: ajv.errorsText() }, { status: 400 })
   }
 
-  const convertionId =
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
+  const convertionId = uuid()
 
   const outputDir = `${TMP_DIR}/${convertionId}`
 
