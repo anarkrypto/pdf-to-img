@@ -10,7 +10,11 @@ const s3 = new S3({
   secretAccessKey,
 })
 
-export async function uploadFile(path: string, key: string, type?: string): Promise<S3.ManagedUpload.SendData> {
+export async function uploadFile(
+  path: string,
+  key: string,
+  mimetype?: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const fileStream = createReadStream(path)
 
@@ -22,14 +26,14 @@ export async function uploadFile(path: string, key: string, type?: string): Prom
         Key: key,
         Body: fileStream,
         ACL: 'public-read',
-        ContentType: type
+        ContentType: mimetype,
       },
       undefined,
       (error, data) => {
         if (error) {
           return reject(error.message)
         }
-        resolve(data)
+        resolve(data.Location)
       },
     )
   })
