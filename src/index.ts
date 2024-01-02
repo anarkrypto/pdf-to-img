@@ -20,6 +20,7 @@ interface ConvertData {
   url: string
   quality: number
   format: ImageFormats
+  density: number
 }
 
 interface PageResult {
@@ -36,6 +37,7 @@ const schema: JSONSchemaType<ConvertData> = {
     url: { type: 'string', format: 'uri', maxLength: 1024 },
     quality: { type: 'integer', minimum: 1, maximum: 100 },
     format: { type: 'string', enum: ['png', 'jpg', 'jpeg', 'webp'] },
+    density: { type: 'integer', minimum: 1, maximum: 600 },
   },
   required: ['url'],
   additionalProperties: false,
@@ -44,6 +46,7 @@ const schema: JSONSchemaType<ConvertData> = {
 const defaultConfig: Partial<ConvertData> = {
   quality: 80,
   format: 'webp',
+  density: 300
 }
 
 const app = new Hono()
@@ -85,7 +88,7 @@ app.post('/', async (c) => {
 
     await execAsync(`mkdir ${outputDir}`)
 
-    await execAsync(`magick -quality ${config.quality} -define webp:lossless=true ${config.url} ${outputDir}/%d.webp`)
+    await execAsync(`magick -quality ${config.quality} -density ${config.density} -define webp:lossless=true ${config.url} ${outputDir}/%d.webp`)
 
     const imageFiles = await readdirAsync(outputDir)
 
