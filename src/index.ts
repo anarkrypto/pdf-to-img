@@ -5,21 +5,20 @@ import { promisify } from 'util'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
 import { uploadFile } from './utils/upload'
-import { getMD5 } from './utils/checksum'
 import { cors } from 'hono/cors'
 import { ConvertData, convert } from './utils/convert'
 
 const execAsync = promisify(exec)
 
 const TMP_DIR = '/tmp'
-const BUCKET_DIR = 'pdfs/'
+const BUCKET_DIR = 'pdfs'
 
 const ajv = new Ajv()
 addFormats(ajv)
 
 interface RequestBody extends Omit<ConvertData, 'outputDir'> {}
 
-export interface PageResult {
+interface PageResult {
   page: number
   url: string
 }
@@ -66,24 +65,21 @@ app.post('/', async (c) => {
 
   const config = { ...defaultConfig, ...data }
 
-  const uploadWithChecksum = async (file: string) => {
-    const path = `${outputDir}/${file}`
-    const md5 = await getMD5(path)
-    const key = `${BUCKET_DIR}/${md5}/${file}`
-    const result = await uploadFile(path, key, config.format)
-    const page = parseInt(file.split('.')[0], 10)
-    return {
-      page,
-      url: result.Location,
-    }
-  }
-
   try {
     const imageFiles = await convert({ ...config, outputDir })
 
     const promises: Promise<PageResult>[] = []
 
-    imageFiles.forEach((file) => promises.push(uploadWithChecksum(file)))
+    for (const file of imageFiles) {
+      const page = Number(file.split('.')[0])
+      const key = `${BUCKET_DIR}/${convertionId}/${file}`
+      const promise = uploadFile(
+        `${outputDir}/${file}`,
+        key,
+        `image/${config.format}`,
+      ).then((url) => ({ url, page }))
+      promises.push(promise)
+    }
 
     const result = await Promise.all(promises)
 
@@ -92,9 +88,12 @@ app.post('/', async (c) => {
     return c.json(resultSorted)
   } catch (error) {
     console.error(`Error processing ${data.url}`, error)
-    return c.json({
-      message: error instanceof Error ? error.message : 'unknown error',
-    }, 500)
+    return c.json(
+      {
+        message: error instanceof Error ? error.message : 'unknown error',
+      },
+      500,
+    )
   } finally {
     await execAsync(`rm -rf ${outputDir}`)
   }
