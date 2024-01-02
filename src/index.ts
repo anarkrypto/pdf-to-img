@@ -7,6 +7,7 @@ import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
 import { uploadFile } from './utils/upload'
 import { getMD5 } from './utils/checksum'
+import { cors } from 'hono/cors'
 
 const execAsync = promisify(exec)
 const readdirAsync = promisify(readdir)
@@ -46,6 +47,15 @@ const defaultConfig: Partial<ConvertData> = {
 }
 
 const app = new Hono()
+
+app.use(
+  '*',
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    allowMethods: ['POST', 'OPTIONS'],
+  })
+)
+
 app.post('/', async (c) => {
   const data = await c.req.json()
   if (!ajv.validate(schema, data)) {
