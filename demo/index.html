@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>PDF TO IMG</title>
+    <style>
+        /* Add any additional styles here */
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="max-w-md p-8 bg-white shadow-md rounded-md">
+        <h1 class="text-2xl font-semibold mb-2">PDF TO IMG</h1>
+        <h1 class="text-base mb-4">Demo do conversor de PDF para imagens.</h2>
+        <div class="mb-4">
+            <input type="text" id="urlInput" placeholder="Cole o URL do PDF aqui" class="w-full px-3 py-2 border rounded-md">
+        </div>
+        
+        <button id="convertBtn" onclick="convertToIMG()" class="w-full bg-blue-500 text-white px-4 py-2 rounded-md">
+            <span id="btnText">Convert</span>
+            <svg id="loader" class="animate-spin hidden inline-block h-5 w-5 text-white mx-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+        </button>
+
+        <div id="pdfImages" class="mt-6 max-h-96 overflow-y-auto">
+            <!-- Images will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        async function convertToIMG() {
+            const urlInput = document.getElementById('urlInput');
+            const convertBtn = document.getElementById('convertBtn');
+            const loader = document.getElementById('loader');
+            const pdfImages = document.getElementById('pdfImages');
+            const btnText = document.getElementById('btnText');
+
+            // Show loader while fetching data
+            loader.classList.remove('hidden');
+            btnText.innerText = 'Converting...';
+
+            try {
+                // Fetch data from the API
+                const response = await fetch('http://localhost:3000', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: urlInput.value }),
+                });
+
+                const data = await response.json();
+
+                // Display images
+                pdfImages.innerHTML = data.map(item => `<img src="${item.url}" alt="Page ${item.page}" class="mb-4">`).join('');
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Error fetching data:', error);
+                // Handle errors as needed
+            } finally {
+                // Hide loader and reset button text
+                loader.classList.add('hidden');
+                btnText.innerText = 'Convert';
+            }
+        }
+    </script>
+</body>
+</html>

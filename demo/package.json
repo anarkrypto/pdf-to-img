@@ -1,0 +1,11 @@
+{
+  "name": "pdf-to-img-demo",
+  "version": "0.1.0",
+  "description": "Simple web interface to test PDF-TO-IMG API",
+  "scripts": {
+    "start": "http-server"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
