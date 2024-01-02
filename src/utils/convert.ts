@@ -8,7 +8,7 @@ export interface ConvertData {
     url: string
     quality: number
     format: ImageFormats
-    density: number
+    dpi: number
     outputDir: string
 }
 
@@ -18,7 +18,7 @@ const readdirAsync = promisify(readdir)
 export async function convert (config: ConvertData): Promise<string[]> {
     await execAsync(`mkdir ${config.outputDir}`)
 
-    await execAsync(`magick -quality ${config.quality} -density ${config.density} -define webp:lossless=true ${config.url} ${config.outputDir}/%d.${config.format}`)
+    await execAsync(`magick -quality ${config.quality} -density ${config.dpi} -define webp:lossless=true ${config.url} ${config.outputDir}/%d.${config.format}`)
 
     const imageFiles = await readdirAsync(config.outputDir)
 

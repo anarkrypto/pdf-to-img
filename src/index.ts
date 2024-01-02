@@ -30,7 +30,7 @@ const schema: JSONSchemaType<RequestBody> = {
     url: { type: 'string', format: 'uri', maxLength: 1024 },
     quality: { type: 'integer', minimum: 1, maximum: 100 },
     format: { type: 'string', enum: ['png', 'jpg', 'jpeg', 'webp'] },
-    density: { type: 'integer', minimum: 1, maximum: 600 },
+    dpi: { type: 'integer', minimum: 1, maximum: 600 },
   },
   required: ['url'],
   additionalProperties: false,
@@ -39,7 +39,7 @@ const schema: JSONSchemaType<RequestBody> = {
 const defaultConfig: Partial<ConvertData> = {
   quality: 80,
   format: 'webp',
-  density: 300,
+  dpi: 300,
 }
 
 const app = new Hono()
