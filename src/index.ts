@@ -2,36 +2,29 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { readdir } from 'fs'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
 import { uploadFile } from './utils/upload'
 import { getMD5 } from './utils/checksum'
 import { cors } from 'hono/cors'
+import { ConvertData, convert } from './utils/convert'
 
 const execAsync = promisify(exec)
-const readdirAsync = promisify(readdir)
+
 const TMP_DIR = '/tmp'
 const BUCKET_DIR = 'pdfs/'
-
-type ImageFormats = 'png' | 'jpg' | 'jpeg' | 'webp'
-
-interface ConvertData {
-  url: string
-  quality: number
-  format: ImageFormats
-  density: number
-}
-
-interface PageResult {
-  page: number
-  url: string
-}
 
 const ajv = new Ajv()
 addFormats(ajv)
 
-const schema: JSONSchemaType<ConvertData> = {
+interface RequestBody extends Omit<ConvertData, 'outputDir'> {}
+
+export interface PageResult {
+  page: number
+  url: string
+}
+
+const schema: JSONSchemaType<RequestBody> = {
   type: 'object',
   properties: {
     url: { type: 'string', format: 'uri', maxLength: 1024 },
@@ -46,7 +39,7 @@ const schema: JSONSchemaType<ConvertData> = {
 const defaultConfig: Partial<ConvertData> = {
   quality: 80,
   format: 'webp',
-  density: 300
+  density: 300,
 }
 
 const app = new Hono()
@@ -56,7 +49,7 @@ app.use(
   cors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
     allowMethods: ['POST', 'OPTIONS'],
-  })
+  }),
 )
 
 app.post('/', async (c) => {
@@ -65,8 +58,9 @@ app.post('/', async (c) => {
     return c.json({ message: ajv.errorsText() }, { status: 400 })
   }
 
-  const convertionId = 
-    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const convertionId =
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
 
   const outputDir = `${TMP_DIR}/${convertionId}`
 
@@ -80,17 +74,12 @@ app.post('/', async (c) => {
     const page = parseInt(file.split('.')[0], 10)
     return {
       page,
-      url: result.Location
+      url: result.Location,
     }
   }
 
   try {
-
-    await execAsync(`mkdir ${outputDir}`)
-
-    await execAsync(`magick -quality ${config.quality} -density ${config.density} -define webp:lossless=true ${config.url} ${outputDir}/%d.webp`)
-
-    const imageFiles = await readdirAsync(outputDir)
+    const imageFiles = await convert({ ...config, outputDir })
 
     const promises: Promise<PageResult>[] = []
 
@@ -103,7 +92,9 @@ app.post('/', async (c) => {
     return c.json(resultSorted)
   } catch (error) {
     console.error(`Error processing ${data.url}`, error)
-    return c.json({message: error instanceof Error ? error.message : 'unknown error'})
+    return c.json({
+      message: error instanceof Error ? error.message : 'unknown error',
+    })
   } finally {
     await execAsync(`rm -rf ${outputDir}`)
   }
