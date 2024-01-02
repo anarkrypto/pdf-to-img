@@ -94,7 +94,7 @@ app.post('/', async (c) => {
     console.error(`Error processing ${data.url}`, error)
     return c.json({
       message: error instanceof Error ? error.message : 'unknown error',
-    })
+    }, 500)
   } finally {
     await execAsync(`rm -rf ${outputDir}`)
   }
