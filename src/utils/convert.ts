@@ -4,7 +4,7 @@ import { promisify } from "util"
 
 export type ImageFormats = 'png' | 'jpg' | 'jpeg' | 'webp'
 
-export interface ConvertData {
+export interface ConvertOptions {
     url: string
     quality: number
     format: ImageFormats
@@ -15,12 +15,12 @@ export interface ConvertData {
 const execAsync = promisify(exec)
 const readdirAsync = promisify(readdir)
 
-export async function convert (config: ConvertData): Promise<string[]> {
-    await execAsync(`mkdir ${config.outputDir}`)
+export async function convert (options: ConvertOptions): Promise<string[]> {
+    await execAsync(`mkdir ${options.outputDir}`)
 
-    await execAsync(`magick -quality ${config.quality} -density ${config.dpi} -define webp:lossless=true ${config.url} ${config.outputDir}/%d.${config.format}`)
+    await execAsync(`magick -quality ${options.quality} -density ${options.dpi} -define webp:lossless=true ${options.url} ${options.outputDir}/%d.${options.format}`)
 
-    const imageFiles = await readdirAsync(config.outputDir)
+    const imageFiles = await readdirAsync(options.outputDir)
 
     return imageFiles
 }

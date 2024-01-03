@@ -7,7 +7,7 @@ import addFormats from 'ajv-formats'
 import { cors } from 'hono/cors'
 import { v4 as uuid } from 'uuid'
 import { uploadFile } from './utils/upload'
-import { ConvertData, convert } from './utils/convert'
+import { ConvertOptions, convert } from './utils/convert'
 
 const execAsync = promisify(exec)
 
@@ -17,7 +17,7 @@ const BUCKET_DIR = 'pdfs'
 const ajv = new Ajv()
 addFormats(ajv)
 
-interface RequestBody extends Omit<ConvertData, 'outputDir'> {}
+interface RequestBody extends Omit<ConvertOptions, 'outputDir'> {}
 
 interface PageResult {
   page: number
@@ -36,7 +36,7 @@ const schema: JSONSchemaType<RequestBody> = {
   additionalProperties: false,
 }
 
-const defaultConfig: Partial<ConvertData> = {
+const defaultOptions: Partial<ConvertOptions> = {
   quality: 80,
   format: 'webp',
   dpi: 300,
@@ -62,10 +62,10 @@ app.post('/', async (c) => {
 
   const outputDir = `${TMP_DIR}/${convertionId}`
 
-  const config = { ...defaultConfig, ...data }
+  const options = { ...defaultOptions, ...data }
 
   try {
-    const imageFiles = await convert({ ...config, outputDir })
+    const imageFiles = await convert({ ...options, outputDir })
 
     const promises: Promise<PageResult>[] = []
 
@@ -75,7 +75,7 @@ app.post('/', async (c) => {
       const promise = uploadFile(
         `${outputDir}/${file}`,
         key,
-        `image/${config.format}`,
+        `image/${options.format}`,
       ).then((url) => ({ url, page }))
       promises.push(promise)
     }
