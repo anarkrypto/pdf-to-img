@@ -10,6 +10,9 @@ COPY tsconfig.json package.json package-lock.json ./
 RUN echo S3_BUCKET_NAME="$S3_BUCKET_NAME" > .env
 RUN echo S3_ACCESS_KEY_ID="$S3_ACCESS_KEY_ID" >> .env
 RUN echo S3_SECRET_ACCESS_KEY="$S3_SECRET_ACCESS_KEY" >> .env
+RUN echo RABBITMQ_URL="$RABBITMQ_URL" >> .env
+RUN echo RABBITMQ_USER="$RABBITMQ_USER" >> .env
+RUN echo RABBITMQ_PASS="$RABBITMQ_PASS" >> .env
 
 RUN npm ci
 
