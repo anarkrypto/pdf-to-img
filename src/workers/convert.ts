@@ -12,10 +12,9 @@ export async function convert({
   ...options
 }: TaskPayload): Promise<PageResult[]> {
   const outputDir = `/tmp/${convertionId}`
+  await execAsync(`mkdir ${outputDir}`)
 
   try {
-    await execAsync(`mkdir ${outputDir}`)
-
     await execAsync(
       `magick -quality ${options.quality} -density ${options.dpi} -define webp:lossless=true ${url} ${outputDir}/%d.${options.format}`,
     )
@@ -29,7 +28,7 @@ export async function convert({
 
     return pages
   } catch (error) {
-    await execAsync(`rm -rf ${outputDir}`)
+    await execAsync(`rm -r ${outputDir}`)
     throw error
   }
 }
