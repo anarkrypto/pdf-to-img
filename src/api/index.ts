@@ -1,4 +1,3 @@
-import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
@@ -6,6 +5,7 @@ import { cors } from 'hono/cors'
 import { v4 as uuid } from 'uuid'
 import { ConversionOptions } from '../types'
 import { sendToQueue } from '../queue/produce'
+import { serve } from '@hono/node-server/.'
 
 const ajv = new Ajv()
 addFormats(ajv)
@@ -71,4 +71,7 @@ app.post('/', async (c) => {
   }
 })
 
-serve(app)
+export function startAPI () {
+  console.log(`[INFO] Starting API`)
+  serve(app)
+}
