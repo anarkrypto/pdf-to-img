@@ -1,13 +1,11 @@
-import { Connection, connect } from 'amqplib'
+import { Connection, connect } from './connect'
 import { TaskPayload } from '../types'
-
-const AMQP_URL = 'amqp://localhost'
 
 let connection: Connection
 
 export async function sendToQueue(queue: string, task: TaskPayload) {
   if (!connection) {
-    connection = await connect(AMQP_URL, 'heartbeat=60')
+    connection = await connect()
   }
 
   const channel = await connection.createChannel()
