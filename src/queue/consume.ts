@@ -1,22 +1,19 @@
 import { Connection, connect } from './connect'
 import { TaskPayload } from '../types'
 
-let connection: Connection
 
 export type Worker = (payload: TaskPayload) => Promise<void>
 
 export async function consumeQueue(queue: string, worker: Worker) {
 
-  if (!connection) {
-    connection = await connect()
-  }
+  const connection: Connection = await connect()
 
   const channel = await connection.createChannel()
 
   try {
-    channel.assertQueue(queue, { durable: true })
+    await channel.assertQueue(queue, { durable: true })
     channel.prefetch(1)
-    channel.consume(queue, async (message) => {
+    await channel.consume(queue, async (message) => {
       if (!message) {
         return
       }
@@ -31,7 +28,8 @@ export async function consumeQueue(queue: string, worker: Worker) {
         channel.nack(message)
       }
     })
-  } catch {
+  } catch (error) {
     await channel.close()
+    throw error
   }
 }
