@@ -11,21 +11,25 @@ export async function convert({
   url,
   ...options
 }: TaskPayload): Promise<PageResult[]> {
-
   const outputDir = `/tmp/${convertionId}`
 
-  await execAsync(`mkdir ${outputDir}`)
+  try {
+    await execAsync(`mkdir ${outputDir}`)
 
-  await execAsync(
-    `magick -quality ${options.quality} -density ${options.dpi} -define webp:lossless=true ${url} ${outputDir}/%d.${options.format}`,
-  )
+    await execAsync(
+      `magick -quality ${options.quality} -density ${options.dpi} -define webp:lossless=true ${url} ${outputDir}/%d.${options.format}`,
+    )
 
-  const imageFiles = await readdirAsync(outputDir)
+    const imageFiles = await readdirAsync(outputDir)
 
-  const pages = imageFiles.map((file) => ({
-    page: Number(file.split('.')[0]),
-    url: `${outputDir}/${file}`,
-  }))
+    const pages = imageFiles.map((file) => ({
+      page: Number(file.split('.')[0]),
+      url: `${outputDir}/${file}`,
+    }))
 
-  return pages
+    return pages
+  } catch (error) {
+    await execAsync(`rm -rf ${outputDir}`)
+    throw error
+  }
 }
