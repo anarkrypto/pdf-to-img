@@ -5,6 +5,7 @@ import { convert } from './convert'
 import { uploadImages } from './upload'
 import { promisify } from 'util'
 import { exec } from 'child_process'
+import { callWebhook } from './webhook'
 
 const execAsync = promisify(exec)
 
@@ -18,13 +19,23 @@ async function convertTask(payload: TaskPayload) {
 }
 
 async function uploadTask(payload: TaskPayload) {
-  await uploadImages(payload)
+  const pages = await uploadImages(payload)
   console.log(`[INFO] Upload task ${payload.convertionId} finished`)
-  await execAsync(`rm -rf /tmp/${payload.convertionId}`)
+  execAsync(`rm -rf /tmp/${payload.convertionId}`)
+  await sendToQueue('webhook', {
+    ...payload,
+    pages,
+  })
+}
+
+async function webhookTask(payload: TaskPayload) {
+  await callWebhook(payload)
+  console.log(`[INFO] Webhook task ${payload.convertionId} finished`)
 }
 
 export async function startWorkers() {
   console.log(`[INFO] Starting Workers`)
   consumeQueue('convert', convertTask)
   consumeQueue('upload', uploadTask)
+  consumeQueue('webhook', webhookTask)
 }

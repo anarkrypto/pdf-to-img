@@ -21,6 +21,7 @@ const schema: JSONSchemaType<RequestBody> = {
     quality: { type: 'integer', minimum: 1, maximum: 100 },
     format: { type: 'string', enum: ['png', 'jpg', 'jpeg', 'webp'] },
     dpi: { type: 'integer', minimum: 1, maximum: 600 },
+    webhook: { type: 'string', format: 'uri', maxLength: 1024 },
   },
   required: ['url'],
   additionalProperties: false,
@@ -71,7 +72,7 @@ app.post('/', async (c) => {
   }
 })
 
-export function startAPI () {
+export function startAPI() {
   console.log(`[INFO] Starting API`)
   serve(app)
 }
