@@ -32,7 +32,7 @@ export async function consumeQueue(queue: string, worker: Worker) {
           channel.nack(message)
         }
       })
-    } finally {
+    } catch {
       await channel.close()
     }
   }
