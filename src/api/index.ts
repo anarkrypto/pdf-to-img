@@ -59,7 +59,7 @@ app.post('/', async (c) => {
   }
 
   try {
-    await sendToQueue('convert', payload)
+    await sendToQueue('download', payload)
     return c.json({ convertionId })
   } catch (error) {
     console.error(`Error processing ${data.url}`, error)
