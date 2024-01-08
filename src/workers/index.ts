@@ -6,8 +6,16 @@ import { uploadImages } from './upload'
 import { promisify } from 'util'
 import { exec } from 'child_process'
 import { callWebhook } from './webhook'
+import { download } from './download'
 
 const execAsync = promisify(exec)
+
+async function downloadTask(payload: TaskPayload) {
+  await download(payload)
+  console.log(`[INFO] Download task ${payload.convertionId} finished`)
+  await sendToQueue('convert', payload)
+}
+
 
 async function convertTask(payload: TaskPayload) {
   const pages = await convert(payload)
@@ -35,6 +43,7 @@ async function webhookTask(payload: TaskPayload) {
 
 export async function startWorkers() {
   console.log(`[INFO] Starting Workers`)
+  consumeQueue('download', downloadTask)
   consumeQueue('convert', convertTask)
   consumeQueue('upload', uploadTask)
   consumeQueue('webhook', webhookTask)
