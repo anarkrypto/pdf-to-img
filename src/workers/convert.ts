@@ -19,10 +19,13 @@ export async function convert({
 
   const imageFiles = await readdirAsync(outputDir)
 
-  const pages = imageFiles.map((file) => ({
-    page: Number(file.split('.')[0]),
-    url: `${outputDir}/${file}`,
-  }))
+  const pages = imageFiles.map((file) => {
+    const page = options.pages.find(({page}) => page === Number(file.split('.')[0])) as PageResult
+    return {
+      ...page,
+      url: `${outputDir}/${file}`,
+    }
+  })
 
   return pages
 }

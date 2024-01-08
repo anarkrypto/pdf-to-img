@@ -3,6 +3,8 @@ export type ImageFormats = 'png' | 'jpg' | 'jpeg' | 'webp'
 export interface PageResult {
     page: number
     url: string
+    width: number
+    height: number
 }
 
 export interface ConversionOptions {

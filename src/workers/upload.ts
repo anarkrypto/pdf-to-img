@@ -49,11 +49,13 @@ export async function uploadImages({
 }: TaskPayload) {
   const promises: Promise<PageResult>[] = []
 
-  for (const { page, url } of pages) {
+  for (const { page, url, width, height } of pages) {
     const key = `${BUCKET_DIR}/${convertionId}/${page}.${format}`
     const promise = uploadFile(url, key, `image/${format}`).then((url) => ({
       url,
       page: page,
+      width,
+      height,
     }))
     promises.push(promise)
   }
