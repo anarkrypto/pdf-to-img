@@ -13,9 +13,7 @@ export async function info({
   return pages
     .filter((page) => page)
     .map((page, index) => {
-      console.log('page', page)
       const dimensions = page.split(' ')[2]
-      console.log('dimensions', dimensions)
       const width = Number(dimensions.split('x')[0])
       const height = Number(dimensions.split('x')[1])
       return {
