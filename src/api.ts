@@ -3,8 +3,8 @@ import Ajv, { JSONSchemaType } from 'ajv'
 import addFormats from 'ajv-formats'
 import { cors } from 'hono/cors'
 import { v4 as uuid } from 'uuid'
-import { ConversionOptions } from '../types'
-import { sendToQueue } from '../queue/produce'
+import { ConversionOptions } from './types'
+import { sendToQueue } from './queue/produce'
 import { serve } from '@hono/node-server'
 
 const ajv = new Ajv()
