@@ -1,4 +1,4 @@
-import { consumeQueue } from './queue/consume'
+import { consumer } from './queue/consumer'
 import { sendToQueue } from './queue/produce'
 import { TaskPayload } from './types'
 import { convert } from './tasks/convert'
@@ -52,6 +52,9 @@ async function webhookTask(payload: TaskPayload) {
 
 export async function startWorkers() {
   console.log(`[INFO] Starting Workers`)
+
+  const consumeQueue = await consumer()
+
   consumeQueue('download', downloadTask)
   consumeQueue('info', infoTask)
   consumeQueue('convert', convertTask)
