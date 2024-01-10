@@ -61,3 +61,5 @@ export async function startWorkers() {
   consumeQueue('upload', uploadTask)
   consumeQueue('webhook', webhookTask)
 }
+
+startWorkers()

@@ -72,7 +72,4 @@ app.post('/', async (c) => {
   }
 })
 
-export function startAPI() {
-  console.log(`[INFO] Starting API`)
-  serve(app)
-}
+serve(app)
