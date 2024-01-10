@@ -1,13 +1,13 @@
 import { consumeQueue } from './queue/consume'
 import { sendToQueue } from './queue/produce'
 import { TaskPayload } from './types'
-import { convert } from './workers/convert'
-import { uploadImages } from './workers/upload'
+import { convert } from './tasks/convert'
+import { uploadImages } from './tasks/upload'
 import { promisify } from 'util'
 import { exec } from 'child_process'
-import { callWebhook } from './workers/webhook'
-import { download } from './workers/download'
-import { info } from './workers/info'
+import { callWebhook } from './tasks/webhook'
+import { download } from './tasks/download'
+import { info } from './tasks/info'
 
 const execAsync = promisify(exec)
 
