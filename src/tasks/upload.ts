@@ -7,8 +7,10 @@ const BUCKET_DIR = 'pdfs'
 const accessKeyId = process.env.S3_ACCESS_KEY_ID!
 const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY!
 const bucketName = process.env.S3_BUCKET_NAME!
+const region = process.env.S3_REGION!
 
 const client = new S3Client({
+  region,
   credentials: { accessKeyId, secretAccessKey },
 })
 
