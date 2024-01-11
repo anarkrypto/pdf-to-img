@@ -1,5 +1,5 @@
-import { S3 } from 'aws-sdk'
 import { createReadStream } from 'fs'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { PageResult, TaskPayload } from '../types'
 
 const BUCKET_DIR = 'pdfs'
@@ -8,9 +8,8 @@ const accessKeyId = process.env.S3_ACCESS_KEY_ID!
 const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY!
 const bucketName = process.env.S3_BUCKET_NAME!
 
-const s3 = new S3({
-  accessKeyId,
-  secretAccessKey,
+const client = new S3Client({
+  credentials: { accessKeyId, secretAccessKey },
 })
 
 export async function uploadFile(
@@ -18,27 +17,30 @@ export async function uploadFile(
   key: string,
   mimetype?: string,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const fileStream = createReadStream(path)
-
     fileStream.on('error', reject)
 
-    s3.upload(
-      {
+    try {
+      const Key = key.replace(/^\//, '')
+      const command = new PutObjectCommand({
         Bucket: bucketName,
-        Key: key,
-        Body: fileStream,
+        Key,
         ACL: 'public-read',
+        Body: fileStream,
         ContentType: mimetype,
-      },
-      undefined,
-      (error, data) => {
-        if (error) {
-          return reject(error.message)
-        }
-        resolve(data.Location)
-      },
-    )
+      })
+
+      await client.send(command)
+
+      resolve(
+        `https://${bucketName}.s3.${
+          region ? `${region}.` : ''
+        }amazonaws.com/${Key}`,
+      )
+    } catch (error) {
+      reject(error)
+    }
   })
 }
 
