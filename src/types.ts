@@ -18,4 +18,5 @@ export interface TaskPayload extends ConversionOptions {
     url: string
     pages: PageResult[]
     webhook?: string
+    error?: string
 }

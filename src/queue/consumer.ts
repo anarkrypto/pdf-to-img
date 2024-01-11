@@ -38,6 +38,18 @@ export async function consumer() {
         xDeaths.find((d) => d.reason === 'rejected')?.count ?? -1
 
       if (rejectsCount === -1 || rejectsCount >= MAX_REQUEUES) {
+        if (originalQueue !== 'webhook') {
+          const payload = JSON.parse(msg.content.toString())
+          await channel.sendToQueue(
+            'webhook',
+            Buffer.from(
+              JSON.stringify({
+                ...payload,
+                error: `Could not process ${originalQueue}`,
+              }),
+            ),
+          )
+        }
         channel.ack(msg)
         return
       }
