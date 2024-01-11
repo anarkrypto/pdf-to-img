@@ -1,31 +1,50 @@
 import { exec } from 'child_process'
-import { readdir } from 'fs'
 import { promisify } from 'util'
 import { PageResult, TaskPayload } from '../types'
+import { cpus } from 'os'
 
 const execAsync = promisify(exec)
-const readdirAsync = promisify(readdir)
 
 export async function convert({
   convertionId,
-  url,
-  ...options
+  pages,
+  format,
+  quality,
+  dpi,
 }: TaskPayload): Promise<PageResult[]> {
   const pdf = `/tmp/${convertionId}/file.pdf`
   const outputDir = `/tmp/${convertionId}/pages`
-  await execAsync(
-    `magick -quality ${options.quality} -density ${options.dpi} -define webp:lossless=true "${pdf}" "${outputDir}/%d.${options.format}"`,
+
+  const numberOfPages = pages.length
+  const numberOfThreadsAvailable = cpus().length
+  const numberOfThreadsRequired =
+    numberOfThreadsAvailable > numberOfPages
+      ? numberOfPages
+      : numberOfThreadsAvailable
+  const pagesPerThread = Math.ceil(numberOfPages / numberOfThreadsRequired)
+
+  const threads = Array.from(
+    { length: numberOfThreadsRequired },
+    (_, index) => {
+      const start = index * pagesPerThread
+      const end = start + pagesPerThread
+      return pages.slice(start, end)
+    },
   )
 
-  const imageFiles = await readdirAsync(outputDir)
-
-  const pages = imageFiles.map((file) => {
-    const page = options.pages.find(({page}) => page === Number(file.split('.')[0])) as PageResult
-    return {
-      ...page,
-      url: `${outputDir}/${file}`,
-    }
+  const threadsPromises = threads.map((pages) => {
+    const pagesList = pages.map(({ page }) => page).join(',')
+    return execAsync(
+      `magick -quality ${quality} -density ${dpi} -define webp:lossless=true ${pdf}[${pagesList}] ${outputDir}/%d.${format}`,
+    )
   })
 
-  return pages
+  await Promise.all(threadsPromises)
+
+  return pages.map((page) => {
+    return {
+      ...page,
+      url: `${outputDir}/${page.page}.${format}`,
+    }
+  })
 }
