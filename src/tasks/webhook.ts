@@ -9,7 +9,7 @@ export async function callWebhook(payload: TaskPayload) {
     body: JSON.stringify(
       isSuccess
         ? { success: true, ...payload }
-        : { success: false, ...payload },
+        : { success: false, ...payload, pages: undefined },
     ),
     headers: {
       'Content-Type': 'application/json',
