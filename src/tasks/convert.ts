@@ -21,30 +21,33 @@ export async function convert({
     numberOfThreadsAvailable > numberOfPages
       ? numberOfPages
       : numberOfThreadsAvailable
-  const pagesPerThread = Math.ceil(numberOfPages / numberOfThreadsRequired)
 
-  const threads = Array.from(
-    { length: numberOfThreadsRequired },
-    (_, index) => {
-      const start = index * pagesPerThread
-      const end = start + pagesPerThread
-      return pages.slice(start, end)
-    },
-  )
+  const results: PageResult[] = []
+  let currentIndex = 0
 
-  const threadsPromises = threads.map((pages) => {
-    const pagesList = pages.map(({ page }) => page).join(',')
-    return execAsync(
-      `magick -quality ${quality} -density ${dpi} -define webp:lossless=true ${pdf}[${pagesList}] ${outputDir}/%d.${format}`,
+  async function processNextPage(): Promise<void> {
+    if (currentIndex >= numberOfPages) return
+
+    const currentPageIndex = currentIndex
+    currentIndex++
+
+    const page = pages[currentPageIndex]
+
+    await execAsync(
+      `magick -quality ${quality} -density ${dpi} -define webp:lossless=true ${pdf}[${page.page}] ${outputDir}/${page.page}.${format}`,
     )
-  })
 
-  await Promise.all(threadsPromises)
+    results.push({ ...page, url: `${outputDir}/${page.page}.${format}` })
 
-  return pages.map((page) => {
-    return {
-      ...page,
-      url: `${outputDir}/${page.page}.${format}`,
-    }
-  })
+    await processNextPage()
+  }
+
+  const processingPromises: Promise<void>[] = []
+  for (let i = 0; i < numberOfThreadsRequired; i++) {
+    processingPromises.push(processNextPage())
+  }
+
+  await Promise.all(processingPromises)
+
+  return results
 }
