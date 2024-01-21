@@ -1,8 +1,8 @@
-# pdf-to-img
+# PDF-TO-IMG
 
 Convert PDF to JPG, PNG and Webp
 
-![pdf-to-img](https://github.com/anarkrypto/pdf-to-img/assets/32111208/6652981e-7c3c-4d96-85fa-9c8b26669b13)
+![PDF-TO-IMG](https://github.com/anarkrypto/pdf-to-img/assets/32111208/6652981e-7c3c-4d96-85fa-9c8b26669b13)
 
 ## Overview
 This project provides a seamless, robust and scalable solution for converting PDF documents into images using customizable parameters such as quality, DPI, and image format.
