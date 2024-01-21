@@ -1,4 +1,4 @@
-# Contributing to PDF to Image Converter Project
+# Contributing to PDF-TO-IMG
 
 Thank you for considering contributing to our project! We appreciate your interest and support. Please take a moment to review this document to ensure a smooth and collaborative contribution process.
 
@@ -37,4 +37,4 @@ By contributing to this project, you agree that your contributions will be licen
 
 We encourage a positive and inclusive community. Please be respectful and considerate when interacting with other contributors.
 
-Thank you for contributing to the PDF to Image Converter Project!
+Thank you for contributing to the PDF-TO-IMG!
