@@ -60,11 +60,12 @@ app.post('/', async (c) => {
 
   try {
     await sendToQueue('download', payload)
-    return c.json({ convertionId })
+    return c.json({ success: true, convertionId })
   } catch (error) {
     console.error(`Error processing ${data.url}`, error)
     return c.json(
       {
+        success: false,
         message: error instanceof Error ? error.message : 'unknown error',
       },
       500,
