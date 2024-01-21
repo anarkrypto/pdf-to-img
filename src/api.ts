@@ -43,7 +43,7 @@ app.use(
   }),
 )
 
-app.post('/', async (c) => {
+app.post('/convert', async (c) => {
   const data = await c.req.json()
   if (!ajv.validate(schema, data)) {
     return c.json({ message: ajv.errorsText() }, { status: 400 })
