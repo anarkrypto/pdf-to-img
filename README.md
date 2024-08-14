@@ -47,7 +47,7 @@ POST /convert
 
 Optional params:
 - format: jpg, png, webp. Default is webp
-- quality: 1 to 80. Default is 80
+- quality: 1 to 100. Default is 80
 - dpi: 1 to 600. Default is 300
 
 ```json
