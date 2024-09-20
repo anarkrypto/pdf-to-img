@@ -12,6 +12,7 @@
     "ajv-formats": "^2.1.1",
     "amqplib": "^0.10.3",
     "hono": "^3.11.7",
+    "mupdf": "^0.2.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
