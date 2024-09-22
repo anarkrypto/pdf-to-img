@@ -2,7 +2,7 @@ FROM alpine:3.18.0
 
 WORKDIR /app
 
-RUN apk add --update curl npm imagemagick
+RUN apk add --update curl npm
 
 COPY ./src ./src
 COPY tsconfig.json package.json package-lock.json ./

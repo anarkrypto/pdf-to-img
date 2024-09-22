@@ -1,6 +1,6 @@
 import { Connection, connect as connectAmqp } from 'amqplib'
 
-export { Connection } from 'amqplib'
+export type { Connection } from 'amqplib'
 
 const AMQP_URL = process.env.RABBITMQ_URL!
 

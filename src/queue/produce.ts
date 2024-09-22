@@ -1,7 +1,9 @@
 import { Connection, connect } from './connect'
 import { TaskPayload } from '../types'
 
-export async function sendToQueue(queue: string, task: TaskPayload) {
+export type QueueName = 'download' | 'convert' | 'upload' | 'webhook'
+
+export async function sendToQueue(queueName: QueueName, task: TaskPayload) {
   const connection: Connection = await connect()
 
   const channel = await connection.createChannel()
@@ -12,11 +14,11 @@ export async function sendToQueue(queue: string, task: TaskPayload) {
       channel.assertExchange('error-exchange', 'fanout'),
     ])
 
-    await channel.assertQueue(queue, {
+    await channel.assertQueue(queueName, {
       durable: true,
       deadLetterExchange: 'error-exchange',
     })
-    await channel.sendToQueue(queue, Buffer.from(JSON.stringify(task)))
+    await channel.sendToQueue(queueName, Buffer.from(JSON.stringify(task)))
   } finally {
     await channel.close()
     await connection.close()

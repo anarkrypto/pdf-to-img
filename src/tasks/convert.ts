@@ -1,53 +1,139 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { PageResult, TaskPayload } from '../types'
-import { cpus } from 'os'
+import * as fs from "node:fs/promises";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { cpus } from "os";
+import { Worker } from "worker_threads";
+import { PageResult, TaskPayload } from "../types";
 
-const execAsync = promisify(exec)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const workerFilename = join(__dirname, "convert-worker.mjs");
+
+const showProgress = true;
+
+// ANSI color codes and styles
+const green = "\x1b[32m";
+const reset = "\x1b[0m";
+const hideCursor = "\x1b[?25l";
+const showCursor = "\x1b[?25h";
 
 export async function convert({
-  convertionId,
-  pages,
-  format,
-  quality,
-  dpi,
+	convertionId,
+	format,
+	quality,
+	dpi
 }: TaskPayload): Promise<PageResult[]> {
-  const pdf = `/tmp/${convertionId}/file.pdf`
-  const outputDir = `/tmp/${convertionId}/pages`
+	const mupdf = await import("mupdf");
 
-  const numberOfPages = pages.length
-  const numberOfThreadsAvailable = cpus().length
-  const numberOfThreadsRequired =
-    numberOfThreadsAvailable > numberOfPages
-      ? numberOfPages
-      : numberOfThreadsAvailable
+	const pdfFilePath = `/tmp/${convertionId}/file.pdf`;
+	const outputDir = `/tmp/${convertionId}/pages`;
+	const pagesResults: PageResult[] = [];
 
-  const results: PageResult[] = []
-  let currentIndex = 0
+	const maxThreads = cpus().length;
 
-  async function processNextPage(): Promise<void> {
-    if (currentIndex >= numberOfPages) return
+	try {
+		if (showProgress) process.stdout.write(hideCursor);
 
-    const currentPageIndex = currentIndex
-    currentIndex++
+		const fileData = await fs.readFile(pdfFilePath);
 
-    const page = pages[currentPageIndex]
+		const document = mupdf.Document.openDocument(fileData, "application/pdf");
+		const count = document.countPages();
 
-    await execAsync(
-      `magick -quality ${quality} -density ${dpi} -define webp:lossless=true ${pdf}[${page.page}] ${outputDir}/${page.page}.${format}`,
-    )
+		let currentPage = 1;
+		let activeWorkers = 0;
+		let completedPages = 0;
+		const promises = [];
 
-    results.push({ ...page, url: `${outputDir}/${page.page}.${format}` })
+		const updateProgressBar = () => {
+			if (!showProgress) return;
+			const percentage = (completedPages / count) * 100;
+			const filledWidth = Math.round(percentage / 2);
+			const emptyWidth = 50 - filledWidth;
+			const progressBar = `[${"=".repeat(filledWidth)}${" ".repeat(
+				emptyWidth
+			)}] ${percentage.toFixed(2)}%`;
+			const pageCount = `(${completedPages} of ${count} pages)`;
+			process.stdout.write(`\r${green}${progressBar} ${pageCount}${reset}`);
+		};
 
-    await processNextPage()
-  }
+		updateProgressBar();
 
-  const processingPromises: Promise<void>[] = []
-  for (let i = 0; i < numberOfThreadsRequired; i++) {
-    processingPromises.push(processNextPage())
-  }
+		const startWorker = (pageIndex: number) => {
+			return new Promise((resolve, reject) => {
+				const outputPath = `${outputDir}/${pageIndex}.${format}`;
 
-  await Promise.all(processingPromises)
+				const worker = new Worker(workerFilename, {
+					workerData: {
+						index: pageIndex,
+						dpi,
+						format,
+						outputPath,
+						fileData,
+						quality
+					}
+				});
 
-  return results
+				worker.on(
+					"message",
+					({ width, height }: { width: number; height: number }) => {
+						completedPages++;
+						pagesResults.push({
+							page: pageIndex,
+							url: outputPath,
+							width,
+							height
+						});
+						updateProgressBar();
+						if (completedPages === count) {
+							if (showProgress) {
+								console.log("\n"); // Move to next line after progress bar
+							}
+							console.timeEnd("Processing Time");
+							if (showProgress) process.stdout.write(showCursor);
+						}
+						resolve(true);
+					}
+				);
+
+				worker.on("error", (err) => {
+					console.error(`Main thread: Worker error: ${err.message}`);
+					reject(err);
+				});
+
+				worker.on("exit", (code) => {
+					activeWorkers--;
+					if (code !== 0) {
+						reject(
+							new Error(`Main thread: Worker stopped with exit code ${code}`)
+						);
+					} else {
+						if (currentPage <= count) {
+							activeWorkers++;
+							startWorker(currentPage++).catch(reject);
+						}
+					}
+				});
+			});
+		};
+
+		while (currentPage <= count && activeWorkers < maxThreads) {
+			activeWorkers++;
+			promises.push(startWorker(currentPage++));
+		}
+
+		await Promise.all(promises).catch((err) =>
+			console.error(`Main thread: ${err.message}`)
+		);
+
+		return pagesResults.sort((a, b) => a.page - b.page);
+	} catch (error) {
+		console.error(
+			`Main thread: Error processing document: ${
+				error instanceof Error ? error.message : error
+			}`
+		);
+		throw error;
+	} finally {
+		if (showProgress) process.stdout.write(showCursor);
+	}
 }
