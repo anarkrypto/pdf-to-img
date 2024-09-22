@@ -23,8 +23,6 @@ export async function convert({
 	quality,
 	dpi
 }: TaskPayload): Promise<PageResult[]> {
-	console.log("converting...", convertionId, format, quality, dpi);
-
 	const mupdf = await import("mupdf");
 
 	const pdfFilePath = `/tmp/${convertionId}/file.pdf`;
