@@ -19,7 +19,7 @@ const schema: JSONSchemaType<RequestBody> = {
   properties: {
     url: { type: 'string', format: 'uri', maxLength: 1024 },
     quality: { type: 'integer', minimum: 1, maximum: 100 },
-    format: { type: 'string', enum: ['png', 'jpg', 'jpeg', 'webp'] },
+    format: { type: 'string', enum: ['png', 'jpg', 'jpeg'] },
     dpi: { type: 'integer', minimum: 1, maximum: 600 },
     webhook: { type: 'string', format: 'uri', maxLength: 1024 },
   },
@@ -28,8 +28,8 @@ const schema: JSONSchemaType<RequestBody> = {
 }
 
 const defaultOptions: ConversionOptions = {
-  quality: 80,
-  format: 'webp',
+  quality: 100,
+  format: 'jpg',
   dpi: 300,
 }
 

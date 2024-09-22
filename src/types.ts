@@ -1,4 +1,4 @@
-export type ImageFormats = 'png' | 'jpg' | 'jpeg' | 'webp'
+export type ImageFormats = 'png' | 'jpg' | 'jpeg'
 
 export interface PageResult {
     page: number
