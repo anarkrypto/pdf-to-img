@@ -1,0 +1,70 @@
+captainVersion: 4
+services:
+  $$cap_appname:
+    image: anarkrypto/pdf-to-img
+    containerName: $$cap_appname
+    restart: on-failure
+    environment:
+      S3_BUCKET_NAME: $$cap_S3_BUCKET_NAME
+      S3_REGION: $$cap_S3_REGION
+      S3_ACCESS_KEY_ID: $$cap_S3_ACCESS_KEY_ID
+      S3_SECRET_ACCESS_KEY: $$cap_S3_SECRET_ACCESS_KEY
+      RABBITMQ_URL: 'amqp://srv-captain--$$cap_appname-rabbitmq'
+      RABBITMQ_USER: $$cap_RABBITMQ_USER
+      RABBITMQ_PASS: $$cap_RABBITMQ_PASS
+    dependsOn:
+      - $$cap_appname-rabbitmq
+    caproverExtra:
+      containerHttpPort: 3000
+  
+  $$cap_appname-rabbitmq:
+    image: "rabbitmq:3-management"
+    environment:
+      RABBITMQ_DEFAULT_USER: $$cap_RABBITMQ_USER
+      RABBITMQ_DEFAULT_PASS: $$cap_RABBITMQ_PASS
+    healthCheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 15s
+      retries: 5
+    caproverExtra:
+      containerHttpPort: 15672
+
+caproverOneClickApp:
+  variables:
+    - id: $$cap_S3_BUCKET_NAME
+      label: S3 Bucket Name
+      defaultValue: ''
+      description: 'Specify the S3 bucket name'
+      validRegex: /^([a-z0-9.-])+$/
+    - id: $$cap_S3_REGION
+      label: S3 Region
+      defaultValue: 'us-east-1'
+      description: 'Specify the S3 Region'
+      validRegex: /^([a-z0-9-])+$/   
+    - id: $$cap_S3_ACCESS_KEY_ID
+      label: S3 Access Key ID
+      defaultValue: ''
+      description: 'Specify the S3 Access Key ID'
+      validRegex: /^([A-Z0-9])+$/
+    - id: $$cap_S3_SECRET_ACCESS_KEY
+      label: S3 Secret Access Key
+      defaultValue: ''
+      description: 'Specify the S3 Secret Access Key'
+      validRegex: /^[a-zA-Z0-9+/]+={0,2}$/
+    - id: $$cap_RABBITMQ_USER
+      label: RabbitMQ User
+      defaultValue: 'user'
+      description: 'Specify the RabbitMQ user'
+      validRegex: /^([a-zA-Z0-9])+$/
+    - id: $$cap_RABBITMQ_PASS
+      label: RabbitMQ Password
+      defaultValue: 'password'
+      description: 'Specify the RabbitMQ password'
+      validRegex: /^([a-zA-Z0-9])+$/
+  instructions:
+    start: 'Configure the variables and click on Next to deploy the PDF-TO-IMG service with RabbitMQ.'
+    end: 'PDF-TO-IMG service with RabbitMQ is deployed.'
+  displayName: 'PDF-TO-IMG with RabbitMQ'
+  isOfficial: true
+  description: 'PDF-TO-IMG service with RabbitMQ for PDF processing.'
