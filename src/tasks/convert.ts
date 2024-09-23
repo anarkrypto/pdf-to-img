@@ -42,7 +42,6 @@ export async function convert({
 		let currentPage = 1;
 		let activeWorkers = 0;
 		let completedPages = 0;
-		const promises = [];
 
 		const updateProgressBar = () => {
 			if (!showProgress) return;
@@ -54,14 +53,22 @@ export async function convert({
 			)}] ${percentage.toFixed(2)}%`;
 			const pageCount = `(${completedPages} of ${count} pages)`;
 			process.stdout.write(`\r${green}${progressBar} ${pageCount}${reset}`);
+			if (completedPages === count) {
+				console.log("\n"); // Move to next line after progress bar
+				process.stdout.write(showCursor);
+			}
 		};
 
 		updateProgressBar();
 
-		const startWorker = (pageIndex: number) => {
+		const processPage = (
+			pageIndex: number,
+			outputPath: string
+		): Promise<{
+			width: number;
+			height: number;
+		}> => {
 			return new Promise((resolve, reject) => {
-				const outputPath = `${outputDir}/${pageIndex}.${format}`;
-
 				const worker = new Worker(workerFilename, {
 					workerData: {
 						index: pageIndex,
@@ -76,21 +83,7 @@ export async function convert({
 				worker.on(
 					"message",
 					({ width, height }: { width: number; height: number }) => {
-						completedPages++;
-						pagesResults.push({
-							page: pageIndex,
-							url: outputPath,
-							width,
-							height
-						});
-						updateProgressBar();
-						if (completedPages === count) {
-							if (showProgress) {
-								console.log("\n"); // Move to next line after progress bar
-							}
-							if (showProgress) process.stdout.write(showCursor);
-						}
-						resolve(true);
+						resolve({ width, height });
 					}
 				);
 
@@ -100,29 +93,46 @@ export async function convert({
 				});
 
 				worker.on("exit", (code) => {
-					activeWorkers--;
 					if (code !== 0) {
 						reject(
 							new Error(`Main thread: Worker stopped with exit code ${code}`)
 						);
-					} else {
-						if (currentPage <= count) {
-							activeWorkers++;
-							startWorker(currentPage++).catch(reject);
-						}
 					}
 				});
 			});
 		};
 
-		while (currentPage <= count && activeWorkers < maxThreads) {
-			activeWorkers++;
-			promises.push(startWorker(currentPage++));
+		const promises = new Set<Promise<{ width: number; height: number }>>();
+
+		while (currentPage <= count) {
+			if (activeWorkers < maxThreads) {
+				activeWorkers++;
+				const page = currentPage;
+				const outputPath = `${outputDir}/${page}.${format}`;
+				const promise = processPage(page, outputPath);
+				promise
+					.then(({ width, height }) => {
+						completedPages++;
+						pagesResults.push({
+							page: page,
+							url: outputPath,
+							width,
+							height
+						});
+						updateProgressBar();
+					})
+					.finally(() => {
+						activeWorkers--;
+						promises.delete(promise);
+					});
+				promises.add(promise);
+				currentPage++;
+			} else {
+				await Promise.race(promises);
+			}
 		}
 
-		await Promise.all(promises).catch((err) =>
-			console.error(`Main thread: ${err.message}`)
-		);
+		await Promise.all(promises);
 
 		return pagesResults.sort((a, b) => a.page - b.page);
 	} catch (error) {
