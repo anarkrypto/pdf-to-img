@@ -88,7 +88,6 @@ export async function convert({
 							if (showProgress) {
 								console.log("\n"); // Move to next line after progress bar
 							}
-							console.timeEnd("Processing Time");
 							if (showProgress) process.stdout.write(showCursor);
 						}
 						resolve(true);
